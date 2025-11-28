@@ -2,7 +2,7 @@ setting:
   # the maximum amount of concurrent to ping, uint
   concurrent_limit: 20
   # interval to exec ping in seconds, float
-  interval: 60.0
+  interval: 15.0
   # The maximum delay time to ping in milliseconds, float
   delay: 200
   # ping timeout in seconds, float
@@ -10,14 +10,15 @@ setting:
   # send ip addr
   source_ip_addr: 0.0.0.0
   # send ip protocal
-  ip_protocol: ip6
+  ip_protocol: ip4
 
 mesh:
-  add-ping-public: 
-    name: ping-public-demo
+  ave: 
+    name: ping
     type: OtherIP
     ips :
-      - 127.0.0.1
-      - 8.8.8.8
-      - www.baidu.com
-      - kubernetes.default.svc.cluster.local
+      - hkb-backend-prod-jumper01.ave
+      - hkc-data-prod-jumper01.ave
+      - hkb-infra-prod-jumper01.ave
+      - hkb-trading-prod-jumper01.ave
+      - aws-hk01-pingmesh-agent.ave

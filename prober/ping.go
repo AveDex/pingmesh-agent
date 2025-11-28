@@ -49,11 +49,20 @@ var (
 		},
 		[]string{"target", "tor"},
 	)
+
+	pingSuccessGaugeVec = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "pingmesh_success",
+			Help: "ping success",
+		},
+		[]string{"target", "tor"},
+	)
 )
 
 func init() {
 	prometheus.MustRegister(pingDurationGaugeVec)
 	prometheus.MustRegister(pingFailGaugeVec)
+	prometheus.MustRegister(pingSuccessGaugeVec)
 }
 
 type Service interface {
@@ -91,6 +100,7 @@ func NewPingSchedule(sc *config.SafeConfig, concurrentLimit uint,
 func (ps *PingSchedule) reset() {
 	pingDurationGaugeVec.Reset()
 	pingFailGaugeVec.Reset()
+	pingSuccessGaugeVec.Reset()
 }
 
 func (ps *PingSchedule) Stop() {
@@ -164,16 +174,13 @@ func (ps *PingSchedule) pingAll(items map[string]config.PingMeshItem) {
 			defer wg.Done()
 
 			success, rtt := ps.pingOne(ctx, ipTor.Ip, model)
+			pingDurationGaugeVec.WithLabelValues(ipTor.Ip, ipTor.Name).Set(rtt)
 			if !success {
 				pingFailGaugeVec.WithLabelValues(ipTor.Ip, ipTor.Name).Set(1)
+				pingSuccessGaugeVec.WithLabelValues(ipTor.Ip, ipTor.Name).Set(0)
 			} else {
 				pingFailGaugeVec.DeleteLabelValues(ipTor.Ip, ipTor.Name)
-
-				if rtt > 1000.0*ps.MaxDeley.Seconds() {
-					pingDurationGaugeVec.WithLabelValues(ipTor.Ip, ipTor.Name).Set(rtt)
-				} else {
-					pingDurationGaugeVec.DeleteLabelValues(ipTor.Ip, ipTor.Name)
-				}
+				pingSuccessGaugeVec.WithLabelValues(ipTor.Ip, ipTor.Name).Set(1)
 			}
 
 			<-concurrent
